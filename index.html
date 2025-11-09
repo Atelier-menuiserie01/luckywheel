@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Lucky Wheel Style Défilement</title>
+  <title>Lucky Wheel Live</title>
   <style>
     body {
       background: #0d0d0d;
@@ -18,7 +18,7 @@
     }
 
     #luckyCube {
-      width: 140px; /* un peu plus grand */
+      width: 140px;
       height: 140px;
       margin-top: 100px;
       background: linear-gradient(135deg, #00f0ff, #ff00f0);
@@ -26,7 +26,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 42px; /* texte plus grand */
+      font-size: 42px;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 0 25px #00f0ff, 0 0 50px #ff00f0 inset;
@@ -42,8 +42,8 @@
     #casesContainer {
       display: flex;
       overflow: hidden;
-      width: 400px; /* un peu plus large */
-      height: 70px; /* un peu plus haut */
+      width: 400px;
+      height: 70px;
       margin-top: 50px;
       display: none;
       border-radius: 15px;
@@ -53,15 +53,15 @@
     }
 
     .case {
-      flex: 0 0 120px; /* un peu plus large */
-      height: 70px;    /* un peu plus haut */
+      flex: 0 0 120px;
+      height: 70px;
       margin: 0 5px;
       background: linear-gradient(135deg, #ff6a00, #ffd800);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 20px; /* texte un peu plus grand */
+      font-size: 20px;
       border-radius: 10px;
       color: #111;
       box-shadow: 0 0 12px #fff inset;
@@ -69,12 +69,12 @@
 
     #result {
       margin-top: 40px;
-      font-size: 32px; /* plus grand */
+      font-size: 32px;
       font-weight: bold;
       color: #00ffb0;
       text-shadow: 0 0 5px #00ffb0, 0 0 15px #00ffb0, 0 0 25px #00ffb0;
-      opacity: 1;      /* plus de transparence */
-      transform: scale(1); /* scale initial normal */
+      opacity: 1;
+      transform: scale(1);
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
 
@@ -83,7 +83,7 @@
       width: 10px;
       height: 10px;
       background: #fff;
-      opacity: 1; /* plus de transparence */
+      opacity: 1;
       top: 0;
       animation: fall 2s linear forwards;
     }
@@ -92,14 +92,19 @@
       0% { transform: translateY(0) rotate(0deg); opacity:1;}
       100% { transform: translateY(500px) rotate(360deg); opacity:1;}
     }
+
+    .case img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
 
   <div id="luckyCube">🎲</div>
-
   <div id="casesContainer"></div>
-
   <div id="result"></div>
 
   <script>
@@ -107,12 +112,27 @@
     const casesContainer = document.getElementById("casesContainer");
     const resultDiv = document.getElementById("result");
 
-    const results = [
-      "Life Time Access", "Perdu", "Bonus 50 pts", "Encore", "Jackpot", "1 Essai Supplémentaire"
+    let pointsReceived = 0;
+
+    // Résultats pondérés
+    const weightedResults = [
+      { type: "image", src: "https://raw.githubusercontent.com/Atelier-menuiserie01/luckywheel/main/67.png", weight: 2 },
+      { type: "text", text: "🎀 Rose", weight: 0.5 },
+      { type: "text", text: "🤟 Finger Heart", weight: 1.5 },
+      { type: "text", text: "🌌 Galaxie", weight: 7.5 }
     ];
 
+    function getRandomResult() {
+      const totalWeight = weightedResults.reduce((sum, r) => sum + r.weight, 0);
+      let rand = Math.random() * totalWeight;
+      for (let r of weightedResults) {
+        if (rand < r.weight) return r;
+        rand -= r.weight;
+      }
+    }
+
     function spawnConfetti() {
-      for (let i=0;i<25;i++){
+      for (let i=0; i<25; i++){
         const conf = document.createElement("div");
         conf.className = "confetti";
         conf.style.left = Math.random()*window.innerWidth+"px";
@@ -122,9 +142,40 @@
       }
     }
 
-    function easeOutQuad(t) {
-      return t*(2-t);
+    function generateCases() {
+      casesContainer.innerHTML = "";
+      const repeat = 5;
+      for(let r=0; r<repeat; r++){
+        weightedResults.forEach(res => {
+          const div = document.createElement("div");
+          div.className = "case";
+
+          if(res.type === "image") {
+            const img = document.createElement("img");
+            img.src = res.src;
+            div.appendChild(img);
+          } else {
+            div.textContent = res.text;
+          }
+
+          casesContainer.appendChild(div);
+        });
+      }
     }
+
+    // WebSocket pour recevoir les points cadeaux
+    const socket = new WebSocket("ws://localhost:8080"); // serveur WebSocket
+    socket.addEventListener("message", event => {
+      const data = JSON.parse(event.data);
+      if(data.type === "gift") {
+        pointsReceived += data.points;
+        console.log("Points reçus :", pointsReceived);
+        // mise à jour de la pondération
+        weightedResults.forEach(r => {
+          if(r.type === "image") r.weight = 2 + pointsReceived * 0.1;
+        });
+      }
+    });
 
     function lancerLuckyWheel() {
       luckyCube.style.display = "block";
@@ -133,45 +184,38 @@
       resultDiv.style.transform = "scale(0.5)";
       resultDiv.textContent = "";
 
-      // 1️⃣ Cube animé 2s
       setTimeout(() => {
         luckyCube.style.display = "none";
         casesContainer.style.display = "flex";
+        generateCases();
 
-        // 2️⃣ Création des cases (plusieurs répétitions pour défilement fluide)
-        casesContainer.innerHTML = "";
-        const repeat = 5;
-        let fullCases = [];
-        for (let r=0;r<repeat;r++){
-          results.forEach(res => {
-            const div = document.createElement("div");
-            div.className="case";
-            div.textContent = res;
-            casesContainer.appendChild(div);
-            fullCases.push(div);
-          });
-        }
-
-        // 3️⃣ Animation de défilement
-        let duration = 2000; // durée totale défilement en ms
+        let duration = 2000;
         let start = null;
         let container = casesContainer;
         let startScroll = 0;
-        let endScroll = container.scrollWidth / repeat; // approx pour arrêter sur un résultat aléatoire
-        let randomIndex = Math.floor(Math.random() * results.length);
-        endScroll += randomIndex * 130; // chaque case ~120px + 10px margin
+        let endScroll = container.scrollWidth / 5;
+
+        const finalResult = getRandomResult();
+
+        const allCases = container.querySelectorAll(".case");
+        let indexFinal = Array.from(allCases).findIndex(c => {
+          if(finalResult.type === "image") return c.querySelector("img")?.src === finalResult.src;
+          return c.textContent === finalResult.text;
+        });
+
+        endScroll += indexFinal * 130;
 
         function animate(timestamp){
           if(!start) start = timestamp;
           let progress = timestamp - start;
-          let t = Math.min(progress/duration,1);
-          t = easeOutQuad(t); // easing pour ralentir à la fin
+          let t = Math.min(progress/duration, 1);
+          t = t*(2-t);
           container.scrollLeft = startScroll + (endScroll - startScroll)*t;
+
           if(progress < duration){
             requestAnimationFrame(animate);
           } else {
-            // Résultat final
-            resultDiv.textContent = "🎉 " + results[randomIndex];
+            resultDiv.textContent = finalResult.type === "image" ? "🎉 Image !" : "🎉 " + finalResult.text;
             resultDiv.style.opacity = 1;
             resultDiv.style.transform = "scale(1)";
             spawnConfetti();
