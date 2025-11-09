@@ -18,18 +18,18 @@
     }
 
     #luckyCube {
-      width: 120px;
-      height: 120px;
+      width: 140px; /* un peu plus grand */
+      height: 140px;
       margin-top: 100px;
       background: linear-gradient(135deg, #00f0ff, #ff00f0);
       border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
+      font-size: 42px; /* texte plus grand */
       font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 0 20px #00f0ff, 0 0 40px #ff00f0 inset;
+      box-shadow: 0 0 25px #00f0ff, 0 0 50px #ff00f0 inset;
       animation: cubePulse 1s infinite alternate;
     }
 
@@ -42,8 +42,8 @@
     #casesContainer {
       display: flex;
       overflow: hidden;
-      width: 360px;
-      height: 60px;
+      width: 400px; /* un peu plus large */
+      height: 70px; /* un peu plus haut */
       margin-top: 50px;
       display: none;
       border-radius: 15px;
@@ -53,28 +53,28 @@
     }
 
     .case {
-      flex: 0 0 100px;
-      height: 60px;
+      flex: 0 0 120px; /* un peu plus large */
+      height: 70px;    /* un peu plus haut */
       margin: 0 5px;
       background: linear-gradient(135deg, #ff6a00, #ffd800);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: bold;
-      font-size: 18px;
+      font-size: 20px; /* texte un peu plus grand */
       border-radius: 10px;
       color: #111;
-      box-shadow: 0 0 10px #fff inset;
+      box-shadow: 0 0 12px #fff inset;
     }
 
     #result {
       margin-top: 40px;
-      font-size: 28px;
+      font-size: 32px; /* plus grand */
       font-weight: bold;
       color: #00ffb0;
       text-shadow: 0 0 5px #00ffb0, 0 0 15px #00ffb0, 0 0 25px #00ffb0;
-      opacity: 0;
-      transform: scale(0.5);
+      opacity: 1;      /* plus de transparence */
+      transform: scale(1); /* scale initial normal */
       transition: opacity 0.6s ease, transform 0.6s ease;
     }
 
@@ -83,14 +83,14 @@
       width: 10px;
       height: 10px;
       background: #fff;
-      opacity: 0.8;
+      opacity: 1; /* plus de transparence */
       top: 0;
       animation: fall 2s linear forwards;
     }
 
     @keyframes fall {
       0% { transform: translateY(0) rotate(0deg); opacity:1;}
-      100% { transform: translateY(500px) rotate(360deg); opacity:0;}
+      100% { transform: translateY(500px) rotate(360deg); opacity:1;}
     }
   </style>
 </head>
@@ -159,7 +159,7 @@
         let startScroll = 0;
         let endScroll = container.scrollWidth / repeat; // approx pour arrêter sur un résultat aléatoire
         let randomIndex = Math.floor(Math.random() * results.length);
-        endScroll += randomIndex * 110; // chaque case 100px + 10px margin approx
+        endScroll += randomIndex * 130; // chaque case ~120px + 10px margin
 
         function animate(timestamp){
           if(!start) start = timestamp;
