@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Lucky Wheel Style Défilement</title>
+  <style>
+    body {
+      background: #0d0d0d;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+    }
+
+    #luckyCube {
+      width: 120px;
+      height: 120px;
+      margin-top: 100px;
+      background: linear-gradient(135deg, #00f0ff, #ff00f0);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 20px #00f0ff, 0 0 40px #ff00f0 inset;
+      animation: cubePulse 1s infinite alternate;
+    }
+
+    @keyframes cubePulse {
+      0% { transform: rotateX(0deg) rotateY(0deg) scale(1); }
+      50% { transform: rotateX(10deg) rotateY(15deg) scale(1.2); }
+      100% { transform: rotateX(0deg) rotateY(0deg) scale(1); }
+    }
+
+    #casesContainer {
+      display: flex;
+      overflow: hidden;
+      width: 360px;
+      height: 60px;
+      margin-top: 50px;
+      display: none;
+      border-radius: 15px;
+      background: #111;
+      box-shadow: 0 0 20px #00f0ff inset;
+      position: relative;
+    }
+
+    .case {
+      flex: 0 0 100px;
+      height: 60px;
+      margin: 0 5px;
+      background: linear-gradient(135deg, #ff6a00, #ffd800);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      border-radius: 10px;
+      color: #111;
+      box-shadow: 0 0 10px #fff inset;
+    }
+
+    #result {
+      margin-top: 40px;
+      font-size: 28px;
+      font-weight: bold;
+      color: #00ffb0;
+      text-shadow: 0 0 5px #00ffb0, 0 0 15px #00ffb0, 0 0 25px #00ffb0;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #fff;
+      opacity: 0.8;
+      top: 0;
+      animation: fall 2s linear forwards;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(0) rotate(0deg); opacity:1;}
+      100% { transform: translateY(500px) rotate(360deg); opacity:0;}
+    }
+  </style>
+</head>
+<body>
+
+  <div id="luckyCube">🎲</div>
+
+  <div id="casesContainer"></div>
+
+  <div id="result"></div>
+
+  <script>
+    const luckyCube = document.getElementById("luckyCube");
+    const casesContainer = document.getElementById("casesContainer");
+    const resultDiv = document.getElementById("result");
+
+    const results = [
+      "Life Time Access", "Perdu", "Bonus 50 pts", "Encore", "Jackpot", "1 Essai Supplémentaire"
+    ];
+
+    function spawnConfetti() {
+      for (let i=0;i<25;i++){
+        const conf = document.createElement("div");
+        conf.className = "confetti";
+        conf.style.left = Math.random()*window.innerWidth+"px";
+        conf.style.background = `hsl(${Math.random()*360},100%,70%)`;
+        document.body.appendChild(conf);
+        setTimeout(()=>conf.remove(),2000);
+      }
+    }
+
+    function easeOutQuad(t) {
+      return t*(2-t);
+    }
+
+    function lancerLuckyWheel() {
+      luckyCube.style.display = "block";
+      casesContainer.style.display = "none";
+      resultDiv.style.opacity = 0;
+      resultDiv.style.transform = "scale(0.5)";
+      resultDiv.textContent = "";
+
+      // 1️⃣ Cube animé 2s
+      setTimeout(() => {
+        luckyCube.style.display = "none";
+        casesContainer.style.display = "flex";
+
+        // 2️⃣ Création des cases (plusieurs répétitions pour défilement fluide)
+        casesContainer.innerHTML = "";
+        const repeat = 5;
+        let fullCases = [];
+        for (let r=0;r<repeat;r++){
+          results.forEach(res => {
+            const div = document.createElement("div");
+            div.className="case";
+            div.textContent = res;
+            casesContainer.appendChild(div);
+            fullCases.push(div);
+          });
+        }
+
+        // 3️⃣ Animation de défilement
+        let duration = 2000; // durée totale défilement en ms
+        let start = null;
+        let container = casesContainer;
+        let startScroll = 0;
+        let endScroll = container.scrollWidth / repeat; // approx pour arrêter sur un résultat aléatoire
+        let randomIndex = Math.floor(Math.random() * results.length);
+        endScroll += randomIndex * 110; // chaque case 100px + 10px margin approx
+
+        function animate(timestamp){
+          if(!start) start = timestamp;
+          let progress = timestamp - start;
+          let t = Math.min(progress/duration,1);
+          t = easeOutQuad(t); // easing pour ralentir à la fin
+          container.scrollLeft = startScroll + (endScroll - startScroll)*t;
+          if(progress < duration){
+            requestAnimationFrame(animate);
+          } else {
+            // Résultat final
+            resultDiv.textContent = "🎉 " + results[randomIndex];
+            resultDiv.style.opacity = 1;
+            resultDiv.style.transform = "scale(1)";
+            spawnConfetti();
+
+            setTimeout(()=> lancerLuckyWheel(), 4000);
+          }
+        }
+
+        requestAnimationFrame(animate);
+      }, 2000);
+    }
+
+    luckyCube.addEventListener("click", lancerLuckyWheel);
+  </script>
+
+</body>
+</html>
